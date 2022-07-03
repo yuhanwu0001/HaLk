@@ -13,8 +13,6 @@ def prepare_data(sample, qtype, mode, group_times, node_group_one_hot_vector_mul
         head_part, tail_part = sample
         batch_size, negative_sample_size = tail_part.size(0), tail_part.size(1)
 
-        # -------------------------group
-        # -------------------group
         one_hot_head = []
         tail_one_hot = []
         for group_ts in range(group_times):
@@ -32,8 +30,7 @@ def prepare_data(sample, qtype, mode, group_times, node_group_one_hot_vector_mul
                                                                                -1)
             one_hot_head.append(one_hot_head__)
             tail_one_hot.append(tail_one_hot__)
-        # -------------------group
-        # -----------------------relation matrix
+
         relation_matrix = []
         for group_ts in range(group_times):
             relation_matrix_11 = torch.index_select(group_adj_matrix_multi[group_ts], dim=0,
@@ -47,16 +44,12 @@ def prepare_data(sample, qtype, mode, group_times, node_group_one_hot_vector_mul
                 1).unsqueeze(1)
             relation_matrix__ = torch.cat([relation_matrix_11, relation_matrix_12, relation_matrix_2], dim=0)
             relation_matrix.append(relation_matrix__)
-        # -----------------------relation matrix
-        # -------------------------group
 
     elif qtype == 'inter-chain' or qtype == 'union-chain' or qtype == 'disjoin-chain':
         assert mode == 'tail-batch'
         head_part, tail_part = sample
         batch_size, negative_sample_size = tail_part.size(0), tail_part.size(1)
 
-        # -------------------------group
-        # -------------------group
         one_hot_head = []
         tail_one_hot = []
         for group_ts in range(group_times):
@@ -74,8 +67,7 @@ def prepare_data(sample, qtype, mode, group_times, node_group_one_hot_vector_mul
                                                                                -1)
             one_hot_head.append(one_hot_head__)
             tail_one_hot.append(tail_one_hot__)
-        # -------------------group
-        # -----------------------relation matrix
+
         relation_matrix = []
         for group_ts in range(group_times):
             relation_matrix_11 = torch.index_select(group_adj_matrix_multi[group_ts], dim=0,
@@ -89,14 +81,9 @@ def prepare_data(sample, qtype, mode, group_times, node_group_one_hot_vector_mul
                 1).unsqueeze(1)
             relation_matrix__ = torch.cat([relation_matrix_11, relation_matrix_12, relation_matrix_2], dim=0)
             relation_matrix.append(relation_matrix__)
-        # -----------------------relation matrix
-        # -------------------------group
 
     elif qtype == '2-inter' or qtype == '3-inter' or qtype == '2-union' or qtype == '3-union' or qtype == '2-disjoin' or qtype == '3-disjoin':
         if mode == 'single':
-            batch_size, negative_sample_size = sample.size(0), 1
-
-            # -------------------group
             one_hot_head = []
             tail_one_hot = []
             for group_ts in range(group_times):
@@ -121,8 +108,7 @@ def prepare_data(sample, qtype, mode, group_times, node_group_one_hot_vector_mul
 
                 one_hot_head.append(one_hot_head__)
                 tail_one_hot.append(tail_one_hot__)
-            # -------------------group
-            # -----------------------relation matrix
+
             relation_matrix = []
             for group_ts in range(group_times):
                 relation_matrix_1 = torch.index_select(group_adj_matrix_multi[group_ts], dim=0,
@@ -139,13 +125,11 @@ def prepare_data(sample, qtype, mode, group_times, node_group_one_hot_vector_mul
                     relation_matrix__ = torch.cat([relation_matrix__, relation_matrix_3], dim=0)
 
                 relation_matrix.append(relation_matrix__)
-            # -----------------------relation matrix
 
         elif mode == 'tail-batch':
             head_part, tail_part = sample
             batch_size, negative_sample_size = tail_part.size(0), tail_part.size(1)
 
-            # -------------------group
             one_hot_head = []
             tail_one_hot = []
             for group_ts in range(group_times):
@@ -171,8 +155,7 @@ def prepare_data(sample, qtype, mode, group_times, node_group_one_hot_vector_mul
 
                     one_hot_head.append(one_hot_head__)
                     tail_one_hot.append(tail_one_hot__)
-            # -------------------group
-            # -----------------------relation matrix
+
             relation_matrix = []
             for group_ts in range(group_times):
                 relation_matrix_1 = torch.index_select(group_adj_matrix_multi[group_ts], dim=0,
@@ -189,14 +172,9 @@ def prepare_data(sample, qtype, mode, group_times, node_group_one_hot_vector_mul
                     relation_matrix__ = torch.cat([relation_matrix__, relation_matrix_3], dim=0)
 
                 relation_matrix.append(relation_matrix__)
-            # -----------------------relation matrix
 
     elif qtype == '1-chain' or qtype == '2-chain' or qtype == '3-chain':
         if mode == 'single':
-            # just one negative or positive sample
-            batch_size, negative_sample_size = sample.size(0), 1
-
-            # -------------------group
             one_hot_head = []
             tail_one_hot = []
             for group_ts in range(group_times):
@@ -207,8 +185,7 @@ def prepare_data(sample, qtype, mode, group_times, node_group_one_hot_vector_mul
                                                     index=sample[:, -1]).unsqueeze(1)
                 one_hot_head.append(one_hot_head__)
                 tail_one_hot.append(tail_one_hot__)
-            # -------------------group
-            # -----------------------relation matrix
+
             relation_matrix = []
             for group_ts in range(group_times):
                 relation_matrix__ = torch.index_select(group_adj_matrix_multi[group_ts], dim=0,
@@ -227,13 +204,10 @@ def prepare_data(sample, qtype, mode, group_times, node_group_one_hot_vector_mul
                     relation_matrix__ = torch.cat([relation_matrix__, relation_matrix_3], 1)
 
                 relation_matrix.append(relation_matrix__)
-            # -----------------------relation matrix
 
         elif mode == 'tail-batch':
-            # batch size
             head_part, tail_part = sample
             batch_size, negative_sample_size = tail_part.size(0), tail_part.size(1)
-            # -------------------group
             one_hot_head = []
             tail_one_hot = []
             for group_ts in range(group_times):
@@ -244,8 +218,7 @@ def prepare_data(sample, qtype, mode, group_times, node_group_one_hot_vector_mul
                                                     index=tail_part.view(-1)).view(batch_size, negative_sample_size, -1)
                 one_hot_head.append(one_hot_head__)
                 tail_one_hot.append(tail_one_hot__)
-            # -------------------group
-            # -----------------------relation matrix
+
             relation_matrix = []
             for group_ts in range(group_times):
                 relation_matrix__ = torch.index_select(group_adj_matrix_multi[group_ts], dim=0,
@@ -264,19 +237,16 @@ def prepare_data(sample, qtype, mode, group_times, node_group_one_hot_vector_mul
                     relation_matrix__ = torch.cat([relation_matrix__, relation_matrix_3], 1)
 
                 relation_matrix.append(relation_matrix__)
-            # -----------------------relation matrix
 
     return one_hot_head, relation_matrix, tail_one_hot
 
 def run_multi_group(rel_len, qtype, group_times, head_one_hot, relation_matrix, tail_one_hot,
                     disjoin_weight_for_group_matrix, disjoin_then_proj_threshold):
-    ##### group
     for group_ts in range(group_times):
         head_one_hot[group_ts] = torch.unsqueeze(head_one_hot[group_ts], 2)
         tail_one_hot[group_ts] = torch.unsqueeze(tail_one_hot[group_ts], 2)
-    ############3 group
+
     if qtype == 'chain-inter':
-        # ------------------group
         group_dist_list = []
         for group_ts in range(group_times):
             query_one_hots = torch.chunk(head_one_hot[group_ts], 2, dim=0)
@@ -299,10 +269,8 @@ def run_multi_group(rel_len, qtype, group_times, head_one_hot, relation_matrix, 
             group_dist_ = torch.squeeze(group_dist_, 2)
             group_dist_ = torch.norm(group_dist_, p=1, dim=2)
             group_dist_list.append(group_dist_)
-        # ------------------group
 
     elif qtype == 'inter-chain' or qtype == 'disjoin-chain':
-        # ------------------group
         group_dist_list = []
         for group_ts in range(group_times):
             query_one_hots = torch.chunk(head_one_hot[group_ts], 2, dim=0)
@@ -335,12 +303,8 @@ def run_multi_group(rel_len, qtype, group_times, head_one_hot, relation_matrix, 
             group_dist_ = torch.squeeze(group_dist_, 2)
             group_dist_ = torch.norm(group_dist_, p=1, dim=2)
             group_dist_list.append(group_dist_)
-        # ------------------group
-
-        #######################################################################################
 
     elif qtype == 'union-chain':
-        # ------------------group
         group_dist_list = []
         for group_ts in range(group_times):
             query_one_hots = torch.chunk(head_one_hot[group_ts], 2, dim=0)
@@ -364,12 +328,8 @@ def run_multi_group(rel_len, qtype, group_times, head_one_hot, relation_matrix, 
             group_dist_ = torch.squeeze(group_dist_, 2)
             group_dist_ = torch.norm(group_dist_, p=1, dim=2)
             group_dist_list.append(group_dist_)
-        # ------------------group
-
-        #######################################################################################
 
     else:
-        # ------------------group
         group_dist_list = []
         for group_ts in range(group_times):
             query_one_hot = head_one_hot[group_ts]
@@ -426,9 +386,6 @@ def run_multi_group(rel_len, qtype, group_times, head_one_hot, relation_matrix, 
                         group_dist_ = torch.norm(group_dist_, p=1, dim=2)
 
             group_dist_list.append(group_dist_)
-        # ------------------group
-
-        #####################################################################################
 
     group_dist_list = torch.stack(group_dist_list, dim=0)
     group_dist = torch.max(group_dist_list, dim=0)[0]
