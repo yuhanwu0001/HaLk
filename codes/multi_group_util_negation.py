@@ -7,12 +7,210 @@ import torch.nn.functional as F
 
 
 def prepare_data(sample, qtype, mode, group_times, node_group_one_hot_vector_multi, group_adj_matrix_multi, rel_len=None):
+    if qtype == 'inter-neg-chain':
+        if mode == 'single':
+            one_hot_head = []
+            tail_one_hot = []
+            for group_ts in range(group_times):
+                one_hot_head_1 = torch.index_select(node_group_one_hot_vector_multi[group_ts], dim=0, index=sample[:, 0]).unsqueeze(1)
+                one_hot_head_2 = torch.index_select(node_group_one_hot_vector_multi[group_ts], dim=0, index=sample[:, 2]).unsqueeze(1)
+                one_hot_head__ = torch.cat([one_hot_head_1, one_hot_head_2], dim=0)
+                tail_one_hot__ = torch.index_select(node_group_one_hot_vector_multi[group_ts], dim=0, index=sample[:, -1]).unsqueeze(1)
+                one_hot_head.append(one_hot_head__)
+                tail_one_hot.append(tail_one_hot__)
 
-    if qtype == 'chain-inter':
+            relation_matrix = []
+            for group_ts in range(group_times):
+                relation_matrix_11 = torch.index_select(group_adj_matrix_multi[group_ts], dim=0, index=sample[:, 1]).unsqueeze(1).unsqueeze(1)
+                relation_matrix_12 = torch.index_select(group_adj_matrix_multi[group_ts], dim=0, index=sample[:, 3]).unsqueeze(1).unsqueeze(1)
+                relation_matrix_2 = torch.index_select(group_adj_matrix_multi[group_ts], dim=0, index=sample[:, 4]).unsqueeze(1).unsqueeze(1)
+                relation_matrix__ = torch.cat([relation_matrix_11, relation_matrix_12, relation_matrix_2], dim=0)
+                relation_matrix.append(relation_matrix__)
+
+        elif mode == 'tail-batch':
+            head_part, tail_part = sample
+            batch_size, negative_sample_size = tail_part.size(0), tail_part.size(1)
+            one_hot_head = []
+            tail_one_hot = []
+            for group_ts in range(group_times):
+                one_hot_head_1 = torch.index_select(node_group_one_hot_vector_multi[group_ts], dim=0,
+                                                    index=head_part[:, 0]).unsqueeze(
+                    1)
+                one_hot_head_2 = torch.index_select(node_group_one_hot_vector_multi[group_ts], dim=0,
+                                                    index=head_part[:, 2]).unsqueeze(
+                    1)
+                one_hot_head__ = torch.cat([one_hot_head_1, one_hot_head_2], dim=0)
+
+                tail_one_hot__ = torch.index_select(node_group_one_hot_vector_multi[group_ts], dim=0,
+                                                    index=tail_part.view(-1)).view(batch_size,
+                                                                                   negative_sample_size,
+                                                                                   -1)
+                one_hot_head.append(one_hot_head__)
+                tail_one_hot.append(tail_one_hot__)
+
+            relation_matrix = []
+            for group_ts in range(group_times):
+                relation_matrix_11 = torch.index_select(group_adj_matrix_multi[group_ts], dim=0,
+                                                        index=head_part[:, 1]).unsqueeze(
+                    1).unsqueeze(1)
+                relation_matrix_12 = torch.index_select(group_adj_matrix_multi[group_ts], dim=0,
+                                                        index=head_part[:, 3]).unsqueeze(
+                    1).unsqueeze(1)
+                relation_matrix_2 = torch.index_select(group_adj_matrix_multi[group_ts], dim=0,
+                                                       index=head_part[:, 4]).unsqueeze(
+                    1).unsqueeze(1)
+                relation_matrix__ = torch.cat([relation_matrix_11, relation_matrix_12, relation_matrix_2], dim=0)
+                relation_matrix.append(relation_matrix__)
+
+    elif qtype == 'chain-inter-neg' or qtype == 'chain-neg-inter':
+        if mode == 'single':
+            one_hot_head = []
+            tail_one_hot = []
+            for group_ts in range(group_times):
+                one_hot_head_1 = torch.index_select(node_group_one_hot_vector_multi[group_ts], dim=0, index=sample[:, 0]).unsqueeze(1)
+                one_hot_head_2 = torch.index_select(node_group_one_hot_vector_multi[group_ts], dim=0, index=sample[:, 3]).unsqueeze(1)
+                one_hot_head__ = torch.cat([one_hot_head_1, one_hot_head_2], dim=0)
+                tail_one_hot__ = torch.index_select(node_group_one_hot_vector_multi[group_ts], dim=0, index=sample[:, -1]).unsqueeze(1)
+                one_hot_head.append(one_hot_head__)
+                tail_one_hot.append(tail_one_hot__)
+
+            relation_matrix = []
+            for group_ts in range(group_times):
+                relation_matrix_11 = torch.index_select(group_adj_matrix_multi[group_ts], dim=0, index=sample[:, 1]).unsqueeze(1)
+                relation_matrix_12 = torch.index_select(group_adj_matrix_multi[group_ts], dim=0, index=sample[:, 2]).unsqueeze(1)
+                relation_matrix_2 = torch.index_select(group_adj_matrix_multi[group_ts], dim=0, index=sample[:, 4]).unsqueeze(1)
+                relation_matrix__ = torch.cat([relation_matrix_11, relation_matrix_12, relation_matrix_2], dim=0)
+                relation_matrix.append(relation_matrix__)
+
+        elif mode == 'tail-batch':
+            head_part, tail_part = sample
+            batch_size, negative_sample_size = tail_part.size(0), tail_part.size(1)
+            one_hot_head = []
+            tail_one_hot = []
+            for group_ts in range(group_times):
+                one_hot_head_1 = torch.index_select(node_group_one_hot_vector_multi[group_ts], dim=0,
+                                                    index=head_part[:, 0]).unsqueeze(
+                    1)
+                one_hot_head_2 = torch.index_select(node_group_one_hot_vector_multi[group_ts], dim=0,
+                                                    index=head_part[:, 3]).unsqueeze(
+                    1)
+                one_hot_head__ = torch.cat([one_hot_head_1, one_hot_head_2], dim=0)
+
+                tail_one_hot__ = torch.index_select(node_group_one_hot_vector_multi[group_ts], dim=0,
+                                                    index=tail_part.view(-1)).view(batch_size,
+                                                                                   negative_sample_size,
+                                                                                   -1)
+                one_hot_head.append(one_hot_head__)
+                tail_one_hot.append(tail_one_hot__)
+
+            relation_matrix = []
+            for group_ts in range(group_times):
+                relation_matrix_11 = torch.index_select(group_adj_matrix_multi[group_ts], dim=0,
+                                                        index=head_part[:, 1]).unsqueeze(
+                    1).unsqueeze(1)
+                relation_matrix_12 = torch.index_select(group_adj_matrix_multi[group_ts], dim=0,
+                                                        index=head_part[:, 2]).unsqueeze(
+                    1).unsqueeze(1)
+                relation_matrix_2 = torch.index_select(group_adj_matrix_multi[group_ts], dim=0,
+                                                       index=head_part[:, 4]).unsqueeze(
+                    1).unsqueeze(1)
+                relation_matrix__ = torch.cat([relation_matrix_11, relation_matrix_12, relation_matrix_2], dim=0)
+                relation_matrix.append(relation_matrix__)
+
+    elif qtype == '2-inter-neg' or qtype == '3-inter-neg':
+        if mode == 'single':
+            one_hot_head = []
+            tail_one_hot = []
+            for group_ts in range(group_times):
+                one_hot_head_1 = torch.index_select(node_group_one_hot_vector_multi[group_ts], dim=0,
+                                                    index=sample[:, 0]).unsqueeze(
+                    1)
+                one_hot_head_2 = torch.index_select(node_group_one_hot_vector_multi[group_ts], dim=0,
+                                                    index=sample[:, 2]).unsqueeze(
+                    1)
+                one_hot_head__ = torch.cat([one_hot_head_1, one_hot_head_2], dim=0)
+                if rel_len == 3:
+                    one_hot_head_3 = torch.index_select(node_group_one_hot_vector_multi[group_ts], dim=0,
+                                                        index=sample[:, 4]).unsqueeze(1)
+                    one_hot_head__ = torch.cat([one_hot_head__, one_hot_head_3], dim=0)
+
+                tail_one_hot__ = torch.index_select(node_group_one_hot_vector_multi[group_ts], dim=0,
+                                                    index=sample[:, -1]).unsqueeze(1)
+                if rel_len == 2:
+                    tail_one_hot__ = torch.cat([tail_one_hot__, tail_one_hot__], dim=0)
+                elif rel_len == 3:
+                    tail_one_hot__ = torch.cat([tail_one_hot__, tail_one_hot__, tail_one_hot__], dim=0)
+
+                one_hot_head.append(one_hot_head__)
+                tail_one_hot.append(tail_one_hot__)
+
+            relation_matrix = []
+            for group_ts in range(group_times):
+                relation_matrix_1 = torch.index_select(group_adj_matrix_multi[group_ts], dim=0,
+                                                       index=sample[:, 1]).unsqueeze(
+                    1).unsqueeze(1)
+                relation_matrix_2 = torch.index_select(group_adj_matrix_multi[group_ts], dim=0,
+                                                       index=sample[:, 3]).unsqueeze(
+                    1).unsqueeze(1)
+                relation_matrix__ = torch.cat([relation_matrix_1, relation_matrix_2], dim=0)
+                if rel_len == 3:
+                    relation_matrix_3 = torch.index_select(group_adj_matrix_multi[group_ts], dim=0,
+                                                           index=sample[:, 5]).unsqueeze(
+                        1).unsqueeze(1)
+                    relation_matrix__ = torch.cat([relation_matrix__, relation_matrix_3], dim=0)
+
+                relation_matrix.append(relation_matrix__)
+
+        elif mode == 'tail-batch':
+            head_part, tail_part = sample
+            batch_size, negative_sample_size = tail_part.size(0), tail_part.size(1)
+            one_hot_head = []
+            tail_one_hot = []
+            for group_ts in range(group_times):
+                one_hot_head_1 = torch.index_select(node_group_one_hot_vector_multi[group_ts], dim=0,
+                                                    index=head_part[:, 0]).unsqueeze(
+                    1)
+                one_hot_head_2 = torch.index_select(node_group_one_hot_vector_multi[group_ts], dim=0,
+                                                    index=head_part[:, 2]).unsqueeze(
+                    1)
+                one_hot_head__ = torch.cat([one_hot_head_1, one_hot_head_2], dim=0)
+                if rel_len == 3:
+                    one_hot_head_3 = torch.index_select(node_group_one_hot_vector_multi[group_ts], dim=0,
+                                                        index=head_part[:, 4]).unsqueeze(1)
+                    one_hot_head__ = torch.cat([one_hot_head__, one_hot_head_3], dim=0)
+
+                tail_one_hot__ = torch.index_select(node_group_one_hot_vector_multi[group_ts], dim=0,
+                                                    index=tail_part.view(-1)).view(batch_size, negative_sample_size, -1)
+                with torch.no_grad():
+                    if rel_len == 2:
+                        tail_one_hot__ = torch.cat([tail_one_hot__, tail_one_hot__], dim=0)
+                    elif rel_len == 3:
+                        tail_one_hot__ = torch.cat([tail_one_hot__, tail_one_hot__, tail_one_hot__], dim=0)
+
+                    one_hot_head.append(one_hot_head__)
+                    tail_one_hot.append(tail_one_hot__)
+
+            relation_matrix = []
+            for group_ts in range(group_times):
+                relation_matrix_1 = torch.index_select(group_adj_matrix_multi[group_ts], dim=0,
+                                                       index=head_part[:, 1]).unsqueeze(
+                    1).unsqueeze(1)
+                relation_matrix_2 = torch.index_select(group_adj_matrix_multi[group_ts], dim=0,
+                                                       index=head_part[:, 3]).unsqueeze(
+                    1).unsqueeze(1)
+                relation_matrix__ = torch.cat([relation_matrix_1, relation_matrix_2], dim=0)
+                if rel_len == 3:
+                    relation_matrix_3 = torch.index_select(group_adj_matrix_multi[group_ts], dim=0,
+                                                           index=head_part[:, 5]).unsqueeze(
+                        1).unsqueeze(1)
+                    relation_matrix__ = torch.cat([relation_matrix__, relation_matrix_3], dim=0)
+
+                relation_matrix.append(relation_matrix__)
+
+    elif qtype == 'chain-inter':
         assert mode == 'tail-batch'
         head_part, tail_part = sample
         batch_size, negative_sample_size = tail_part.size(0), tail_part.size(1)
-
         one_hot_head = []
         tail_one_hot = []
         for group_ts in range(group_times):
@@ -49,7 +247,6 @@ def prepare_data(sample, qtype, mode, group_times, node_group_one_hot_vector_mul
         assert mode == 'tail-batch'
         head_part, tail_part = sample
         batch_size, negative_sample_size = tail_part.size(0), tail_part.size(1)
-
         one_hot_head = []
         tail_one_hot = []
         for group_ts in range(group_times):
@@ -129,7 +326,6 @@ def prepare_data(sample, qtype, mode, group_times, node_group_one_hot_vector_mul
         elif mode == 'tail-batch':
             head_part, tail_part = sample
             batch_size, negative_sample_size = tail_part.size(0), tail_part.size(1)
-
             one_hot_head = []
             tail_one_hot = []
             for group_ts in range(group_times):
@@ -206,6 +402,7 @@ def prepare_data(sample, qtype, mode, group_times, node_group_one_hot_vector_mul
                 relation_matrix.append(relation_matrix__)
 
         elif mode == 'tail-batch':
+            # batch size
             head_part, tail_part = sample
             batch_size, negative_sample_size = tail_part.size(0), tail_part.size(1)
             one_hot_head = []
@@ -246,7 +443,138 @@ def run_multi_group(rel_len, qtype, group_times, head_one_hot, relation_matrix, 
         head_one_hot[group_ts] = torch.unsqueeze(head_one_hot[group_ts], 2)
         tail_one_hot[group_ts] = torch.unsqueeze(tail_one_hot[group_ts], 2)
 
-    if qtype == 'chain-inter':
+    if qtype == 'inter-neg-chain':
+        group_dist_list = []
+        for group_ts in range(group_times):
+            query_one_hots = torch.chunk(head_one_hot[group_ts], 2, dim=0)
+            relation_matrix_chunk = torch.chunk(relation_matrix[group_ts], 3, dim=0)
+            # pro 1
+            query_one_hot1 = query_one_hots[0]
+            query_one_hot1 = torch.matmul(query_one_hot1, relation_matrix_chunk[0][:, 0, :, :])
+            query_one_hot1[query_one_hot1 >= 1] = 1
+            # pro 2
+            query_one_hot2 = query_one_hots[1]
+            query_one_hot2 = torch.matmul(query_one_hot2, relation_matrix_chunk[1][:, 0, :, :])
+            query_one_hot2[query_one_hot2 >= 1] = 1
+            #negation for 2
+            query_one_hot2[query_one_hot2 == 1] = 2
+            query_one_hot2[query_one_hot2 < 1] = 1
+            query_one_hot2[query_one_hot2 == 2] = 0
+
+            #intersection
+            new_query_one_hot = query_one_hot1 + query_one_hot2
+            new_query_one_hot[new_query_one_hot < 2] = 0
+            new_query_one_hot[new_query_one_hot >= 2] = 1
+
+            #chain
+            new_query_one_hot = torch.matmul(new_query_one_hot, relation_matrix_chunk[2][:, 0, :, :])
+            new_query_one_hot[new_query_one_hot >= disjoin_then_proj_threshold] = 1
+            new_query_one_hot[new_query_one_hot < disjoin_then_proj_threshold] = 0
+
+            group_dist_ = F.relu(tail_one_hot[group_ts] - new_query_one_hot)
+            group_dist_ = torch.squeeze(group_dist_, 2)
+            group_dist_ = torch.norm(group_dist_, p=1, dim=2)
+            group_dist_list.append(group_dist_)
+
+    elif qtype == 'chain-inter-neg':
+        group_dist_list = []
+        for group_ts in range(group_times):
+            query_one_hots = torch.chunk(head_one_hot[group_ts], 2, dim=0)
+            relation_matrix_chunk = torch.chunk(relation_matrix[group_ts], 3, dim=0)
+            # chain 1
+            query_one_hot1 = query_one_hots[0]
+            for i in range(2):
+                query_one_hot1 = torch.matmul(query_one_hot1, relation_matrix_chunk[i][:, 0, :, :])
+            query_one_hot1[query_one_hot1 >= 1] = 1
+
+            # chain 2
+            query_one_hot2 = query_one_hots[1]
+            query_one_hot2 = torch.matmul(query_one_hot2, relation_matrix_chunk[2][:, 0, :, :])
+            query_one_hot2[query_one_hot2 >= 1] = 1
+            #negation for 2
+            query_one_hot2[query_one_hot2 == 1] = 2
+            query_one_hot2[query_one_hot2 < 1] = 1
+            query_one_hot2[query_one_hot2 == 2] = 0
+
+            #intersection
+            query_one_hot_res = query_one_hot1 + query_one_hot2
+            query_one_hot_res[query_one_hot_res < 2] = 0
+            query_one_hot_res[query_one_hot_res >= 2] = 1
+
+            group_dist_ = F.relu(tail_one_hot[group_ts] - query_one_hot_res)
+            group_dist_ = torch.squeeze(group_dist_, 2)
+            group_dist_ = torch.norm(group_dist_, p=1, dim=2)
+            group_dist_list.append(group_dist_)
+
+    elif qtype == 'chain-neg-inter':
+        group_dist_list = []
+        for group_ts in range(group_times):
+            query_one_hots = torch.chunk(head_one_hot[group_ts], 2, dim=0)
+            relation_matrix_chunk = torch.chunk(relation_matrix[group_ts], 3, dim=0)
+            # chain 1
+            query_one_hot1 = query_one_hots[0]
+            for i in range(2):
+                query_one_hot1 = torch.matmul(query_one_hot1, relation_matrix_chunk[i][:, 0, :, :])
+            query_one_hot1[query_one_hot1 >= 1] = 1
+            # negation
+            query_one_hot1[query_one_hot1 == 1] = 2
+            query_one_hot1[query_one_hot1 < 1] = 1
+            query_one_hot1[query_one_hot1 == 2] = 0
+
+            # chain 2
+            query_one_hot2 = query_one_hots[1]
+            query_one_hot2 = torch.matmul(query_one_hot2, relation_matrix_chunk[2][:, 0, :, :])
+            query_one_hot2[query_one_hot2 >= 1] = 1
+
+            #intersection
+            query_one_hot_res = query_one_hot1 + query_one_hot2
+            query_one_hot_res[query_one_hot_res < 2] = 0
+            query_one_hot_res[query_one_hot_res >= 2] = 1
+
+            group_dist_ = F.relu(tail_one_hot[group_ts] - query_one_hot_res)
+            group_dist_ = torch.squeeze(group_dist_, 2)
+            group_dist_ = torch.norm(group_dist_, p=1, dim=2)
+            group_dist_list.append(group_dist_)
+
+    elif qtype == '2-inter-neg' or qtype == '3-inter-neg':
+        group_dist_list = []
+        for group_ts in range(group_times):
+            query_one_hot = head_one_hot[group_ts]
+            for rel in range(rel_len):
+                rel_m = relation_matrix[group_ts][:, rel, :, :]
+                query_one_hot = torch.matmul(query_one_hot, rel_m)
+            query_one_hot[query_one_hot >= 1] = 1
+            rel_len_ = int(qtype.split('-')[0])
+            new_query_one_hot_chunk = torch.chunk(query_one_hot, rel_len_, dim=0)
+            tail_one_hot_chunk = torch.chunk(tail_one_hot[group_ts], rel_len_, dim=0)
+            new_query_one_hot_ = new_query_one_hot_chunk[0]
+            for i in range(1, rel_len_, 1):
+                new_query_one_hot_ = new_query_one_hot_ + new_query_one_hot_chunk[i]
+            new_query_one_hot1 = new_query_one_hot_chunk[0]
+            new_query_one_hot2 = new_query_one_hot_chunk[1]
+            if rel_len_ == 2:
+                #negation for 2
+                new_query_one_hot2[new_query_one_hot2 == 1] = 2
+                new_query_one_hot2[new_query_one_hot2 < 1] = 1
+                new_query_one_hot2[new_query_one_hot2 == 2] = 0
+                new_query_one_hot_ = new_query_one_hot1 + new_query_one_hot2
+            elif rel_len_ == 3:
+                #negation for 3
+                new_query_one_hot3 = new_query_one_hot_chunk[2]
+                new_query_one_hot3[new_query_one_hot3 == 1] = 2
+                new_query_one_hot3[new_query_one_hot3 < 1] = 1
+                new_query_one_hot3[new_query_one_hot3 == 2] = 0
+                new_query_one_hot_ = new_query_one_hot1 + new_query_one_hot2 + new_query_one_hot3
+
+            #intersection
+            new_query_one_hot_[new_query_one_hot_ < rel_len_] = 0
+            new_query_one_hot_[new_query_one_hot_ >= 1] = 1
+            group_dist_ = F.relu(tail_one_hot_chunk[0] - new_query_one_hot_)
+            group_dist_ = torch.squeeze(group_dist_, 2)
+            group_dist_ = torch.norm(group_dist_, p=1, dim=2)
+            group_dist_list.append(group_dist_)
+
+    elif qtype == 'chain-inter':
         group_dist_list = []
         for group_ts in range(group_times):
             query_one_hots = torch.chunk(head_one_hot[group_ts], 2, dim=0)
@@ -320,7 +648,7 @@ def run_multi_group(rel_len, qtype, group_times, head_one_hot, relation_matrix, 
             new_query_one_hot[new_query_one_hot < 1] = 0
             new_query_one_hot[new_query_one_hot >= 1] = 1
 
-            new_query_one_hot = torch.matmul(query_one_hot2, relation_matrix_chunk[2][:, 0, :, :])
+            new_query_one_hot = torch.matmul(new_query_one_hot, relation_matrix_chunk[2][:, 0, :, :])
             new_query_one_hot[new_query_one_hot >= 1] = 1
             new_query_one_hot[new_query_one_hot < 1] = 0
 

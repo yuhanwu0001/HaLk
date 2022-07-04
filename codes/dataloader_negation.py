@@ -123,6 +123,118 @@ class TrainInterDataset(Dataset):
             count[query] = start + len(true_tail[query])
         return count
 
+class TrainInterChainDataset(Dataset):
+    def __init__(self, triples, nentity, nrelation, negative_sample_size, train_ans, mode):
+        assert mode == 'tail-batch'
+        self.len = len(triples)
+        self.triples = triples
+        self.nentity = nentity
+        self.nrelation = nrelation
+        self.negative_sample_size = negative_sample_size
+        self.mode = mode
+        self.count = self.count_frequency(triples, train_ans)
+        self.true_tail = train_ans
+        self.qtype = self.triples[0][-1]
+
+    def __len__(self):
+        return self.len
+
+    def __getitem__(self, idx):
+        query = self.triples[idx][:-2]
+        subsampling_weight = self.count[query]
+        subsampling_weight = torch.sqrt(1 / torch.Tensor([subsampling_weight]))
+        negative_sample_list = []
+        negative_sample_size = 0
+        while negative_sample_size < self.negative_sample_size:
+            negative_sample = np.random.randint(self.nentity, size=self.negative_sample_size * 2)
+            mask = np.in1d(
+                negative_sample,
+                self.true_tail[query],
+                assume_unique=True,
+                invert=True
+            )
+            negative_sample = negative_sample[mask]
+            negative_sample_list.append(negative_sample)
+            negative_sample_size += negative_sample.size
+        negative_sample = np.concatenate(negative_sample_list)[:self.negative_sample_size]
+        negative_sample = torch.from_numpy(negative_sample).long()
+        tail = np.random.choice(list(self.true_tail[query]))
+        positive_sample = torch.LongTensor([query[0][0], query[0][1][0], query[1][0], query[1][1][0], query[2]] + [tail])
+        return positive_sample, negative_sample, subsampling_weight, self.mode
+
+    @staticmethod
+    def collate_fn(data):
+        positive_sample = torch.stack([_[0] for _ in data], dim=0)
+        negative_sample = torch.stack([_[1] for _ in data], dim=0)
+        subsample_weight = torch.cat([_[2] for _ in data], dim=0)
+        mode = data[0][3]
+        return positive_sample, negative_sample, subsample_weight, mode
+
+    @staticmethod
+    def count_frequency(triples, true_tail, start=4):
+        count = {}
+        for triple in triples:
+            query = triple[:-2]
+            assert query not in count
+            count[query] = start + len(true_tail[query])
+        return count
+
+class TrainChainInterDataset(Dataset):
+    def __init__(self, triples, nentity, nrelation, negative_sample_size, train_ans, mode):
+        assert mode == 'tail-batch'
+        self.len = len(triples)
+        self.triples = triples
+        self.nentity = nentity
+        self.nrelation = nrelation
+        self.negative_sample_size = negative_sample_size
+        self.mode = mode
+        self.count = self.count_frequency(triples, train_ans)
+        self.true_tail = train_ans
+        self.qtype = self.triples[0][-1]
+
+    def __len__(self):
+        return self.len
+
+    def __getitem__(self, idx):
+        query = self.triples[idx][:-2]
+        subsampling_weight = self.count[query]
+        subsampling_weight = torch.sqrt(1 / torch.Tensor([subsampling_weight]))
+        negative_sample_list = []
+        negative_sample_size = 0
+        while negative_sample_size < self.negative_sample_size:
+            negative_sample = np.random.randint(self.nentity, size=self.negative_sample_size * 2)
+            mask = np.in1d(
+                negative_sample,
+                self.true_tail[query],
+                assume_unique=True,
+                invert=True
+            )
+            negative_sample = negative_sample[mask]
+            negative_sample_list.append(negative_sample)
+            negative_sample_size += negative_sample.size
+        negative_sample = np.concatenate(negative_sample_list)[:self.negative_sample_size]
+        negative_sample = torch.from_numpy(negative_sample).long()
+        tail = np.random.choice(list(self.true_tail[query]))
+        positive_sample = torch.LongTensor([query[0][0], query[0][1][0], query[0][1][1], query[1][0], query[1][1][0]] + [tail])
+        return positive_sample, negative_sample, subsampling_weight, self.mode
+
+    @staticmethod
+    def collate_fn(data):
+        positive_sample = torch.stack([_[0] for _ in data], dim=0)
+        negative_sample = torch.stack([_[1] for _ in data], dim=0)
+        subsample_weight = torch.cat([_[2] for _ in data], dim=0)
+        mode = data[0][3]
+        return positive_sample, negative_sample, subsample_weight, mode
+
+    @staticmethod
+    def count_frequency(triples, true_tail, start=4):
+        count = {}
+        for triple in triples:
+            query = triple[:-2]
+            assert query not in count
+            count[query] = start + len(true_tail[query])
+        return count
+
 class TestInterDataset(Dataset):
     def __init__(self, triples, test_ans, test_ans_hard, nentity, nrelation, mode):
         self.len = len(triples)
