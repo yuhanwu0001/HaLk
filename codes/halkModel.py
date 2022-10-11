@@ -10,7 +10,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
-from dataloader import *
+from dataloader_negation import *
 import random
 import pickle
 import math
@@ -355,7 +355,7 @@ class HaLk(nn.Module):
         self.cone_intersection = ConeIntersection(self.entity_dim, hidden_dim, drop)
         self.cone_difference = ConeDifference3(self.entity_dim, self.relation_dim)
         self.cone_negation = ConeNegation(self.entity_dim, self.relation_dim, hidden_dim)
-        self.mudulus = nn.Parameter(torch.Tensor([0.5 *  self.embedding_range.item()]), requires_grad=True)
+        self.mudulus = nn.Parameter(torch.Tensor([0.5 * self.embedding_range.item()]), requires_grad=True)
 
         self.each_relation_a_matrix = True
         if group_adj_matrix_single is not None:
