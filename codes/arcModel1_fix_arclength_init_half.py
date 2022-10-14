@@ -33,7 +33,7 @@ def arc_angle_range_regular(x):
     return y
 
 def half_arc_angle_range_regular(x):
-    y = torch.tanh(2 * x) * pi / 2 + pi / 2
+    y = torch.tanh(x) * pi / 2 + pi / 2
     return y
 
 def angle_range_regular(x):

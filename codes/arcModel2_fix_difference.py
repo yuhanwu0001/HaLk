@@ -239,7 +239,7 @@ class ArcDifference3(nn.Module):
         logit2 = torch.cat([center_embedding2 - arclength_embedding2, center_embedding2 + arclength_embedding2], dim=-1)
         center_weight2 = torch.matmul(logit2, self.attention_center_2)
         #arclength
-        logit1_2 = torch.cat([2 * torch.sin((center_embedding1 - center_embedding2) / 2), (arclength_embedding1 - arclength_embedding2)], dim=-1)
+        logit1_2 = torch.cat([2 * torch.sin((center_embedding1 - center_embedding2) / 2), torch.sin((arclength_embedding1 - arclength_embedding2) / 2)], dim=-1)
         MLP_inside_input = torch.stack([logit1_2], dim=0)
         if center_embedding3 == None:
             #center
@@ -260,7 +260,7 @@ class ArcDifference3(nn.Module):
             center_embedding[indicator_three] = center_embedding[indicator_three] - pi
         else:
             #arclength
-            logit1_3 = torch.cat([2 * torch.sin((center_embedding1 - center_embedding3) / 2), (arclength_embedding1 - arclength_embedding3)], dim=-1)
+            logit1_3 = torch.cat([2 * torch.sin((center_embedding1 - center_embedding3) / 2), torch.sin((arclength_embedding1 - arclength_embedding3) / 2)], dim=-1)
             MLP_inside_input = torch.stack([logit1_2, logit1_3], dim=0)
             # center:
             logit3 = torch.cat([center_embedding3 - arclength_embedding3, center_embedding3 + arclength_embedding3], dim=-1)

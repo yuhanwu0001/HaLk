@@ -19,7 +19,7 @@ import ctypes
 #ctypes.cdll.LoadLibrary('caffe2_nvrtc.dll')
 from torch.utils.data import DataLoader
 
-from arcModel2 import HaLk
+from arcModel2_fix_distance import HaLk
 from dataloader_negation import *
 from tensorboardX import SummaryWriter
 import time

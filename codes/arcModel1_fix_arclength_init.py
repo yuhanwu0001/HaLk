@@ -29,6 +29,10 @@ class AngleScale:
         return circle_point_embedding / self.embedding_range * scale
 
 def arc_angle_range_regular(x):
+    y = torch.tanh(x) * pi + pi
+    return y
+
+def half_arc_angle_range_regular(x):
     y = torch.tanh(2 * x) * pi / 2 + pi / 2
     return y
 
@@ -72,7 +76,7 @@ class ArcNegation(nn.Module):
         center_embedding = self.post_center_layer(logit)
         arclength_embedding = self.post_arclength_layer(logit)
         center_embedding = angle_range_regular(center_embedding)
-        arclength_embedding = arc_angle_range_regular(arclength_embedding)
+        arclength_embedding = half_arc_angle_range_regular(arclength_embedding)
 
         return center_embedding, arclength_embedding
 
@@ -111,7 +115,7 @@ class ArcProjection(nn.Module):
         for nl in range(0, self.num_layers):
             y = F.relu(getattr(self, "layer_arclength{}".format(nl))(y))
         y = self.layer_arclength2(y)
-        arclength_embedding = arc_angle_range_regular(y)
+        arclength_embedding = half_arc_angle_range_regular(y)
 
         return center_embedding, arclength_embedding
 
@@ -1265,7 +1269,7 @@ class HaLk(nn.Module):
             relation_center_1 = angle_range_regular(relation_center_1)
             relation_offset_1 = offsets[0][:, 0, :, :]
             relation_offset_1 = self.angle_scale(relation_offset_1, self.polar_angle_scale)
-            relation_offset_1 = angle_range_regular(relation_offset_1)
+            relation_offset_1 = arc_angle_range_regular(relation_offset_1)
             query_center_1, query_offset_1 = self.arc_proj(query_center_1, query_offset_1 * 0.5, relation_center_1,
                                                            relation_offset_1 * 0.5)
             for i in range(1, 2):
@@ -1275,7 +1279,7 @@ class HaLk(nn.Module):
                 relation_center = angle_range_regular(relation_center)
                 relation_offset = offsets[i][:, 0, :, :]
                 relation_offset = self.angle_scale(relation_offset, self.polar_angle_scale)
-                relation_offset = angle_range_regular(relation_offset)
+                relation_offset = arc_angle_range_regular(relation_offset)
                 query_center_1, query_offset_1 = self.arc_proj(query_center_1, query_offset_1, relation_center,
                                                                relation_offset * 0.5)
             # projection
@@ -1288,7 +1292,7 @@ class HaLk(nn.Module):
             relation_center = angle_range_regular(relation_center)
             relation_offset = offsets[2][:, 0, :, :]
             relation_offset = self.angle_scale(relation_offset, self.polar_angle_scale)
-            relation_offset = angle_range_regular(relation_offset)
+            relation_offset = arc_angle_range_regular(relation_offset)
             query_center_2, query_offset_2 = self.arc_proj(query_center_2, query_offset_2 * 0.5, relation_center,
                                                            relation_offset * 0.5)
             # negation for 2
@@ -1353,7 +1357,7 @@ class HaLk(nn.Module):
             relation_center_1 = angle_range_regular(relation_center_1)
             relation_offset_1 = offsets[0][:, 0, :, :]
             relation_offset_1 = self.angle_scale(relation_offset_1, self.polar_angle_scale)
-            relation_offset_1 = angle_range_regular(relation_offset_1)
+            relation_offset_1 = arc_angle_range_regular(relation_offset_1)
             query_center_1, query_offset_1 = self.arc_proj(query_center_1, query_offset_1 * 0.5, relation_center_1,
                                                            relation_offset_1 * 0.5)
             for i in range(1, 2):
@@ -1363,7 +1367,7 @@ class HaLk(nn.Module):
                 relation_center = angle_range_regular(relation_center)
                 relation_offset = offsets[i][:, 0, :, :]
                 relation_offset = self.angle_scale(relation_offset, self.polar_angle_scale)
-                relation_offset = angle_range_regular(relation_offset)
+                relation_offset = arc_angle_range_regular(relation_offset)
                 query_center_1, query_offset_1 = self.arc_proj(query_center_1, query_offset_1, relation_center,
                                                                relation_offset * 0.5)
 
@@ -1379,7 +1383,7 @@ class HaLk(nn.Module):
             relation_center = angle_range_regular(relation_center)
             relation_offset = offsets[2][:, 0, :, :]
             relation_offset = self.angle_scale(relation_offset, self.polar_angle_scale)
-            relation_offset = angle_range_regular(relation_offset)
+            relation_offset = arc_angle_range_regular(relation_offset)
             query_center_2, query_offset_2 = self.arc_proj(query_center_2, query_offset_2 * 0.5, relation_center,
                                                            relation_offset * 0.5)
 
@@ -1443,7 +1447,7 @@ class HaLk(nn.Module):
             relation_center_1 = angle_range_regular(relation_center_1)
             relation_offset_1 = offsets[0][:, 0, :, :]
             relation_offset_1 = self.angle_scale(relation_offset_1, self.polar_angle_scale)
-            relation_offset_1 = angle_range_regular(relation_offset_1)
+            relation_offset_1 = arc_angle_range_regular(relation_offset_1)
             query_center_1, query_offset_1 = self.arc_proj(query_center_1, query_offset_1 * 0.5, relation_center_1,
                                                            relation_offset_1 * 0.5)
 
@@ -1457,7 +1461,7 @@ class HaLk(nn.Module):
             relation_center_2 = angle_range_regular(relation_center_2)
             relation_offset_2 = offsets[1][:, 0, :, :]
             relation_offset_2 = self.angle_scale(relation_offset_2, self.polar_angle_scale)
-            relation_offset_2 = angle_range_regular(relation_offset_2)
+            relation_offset_2 = arc_angle_range_regular(relation_offset_2)
             query_center_2, query_offset_2 = self.arc_proj(query_center_2, query_offset_2 * 0.5, relation_center_2,
                                                            relation_offset_2 * 0.5)
             # negation
@@ -1481,7 +1485,7 @@ class HaLk(nn.Module):
             relation_center_3 = angle_range_regular(relation_center_3)
             relation_offset_3 = offsets[2][:, 0, :, :]
             relation_offset_3 = self.angle_scale(relation_offset_3, self.polar_angle_scale)
-            relation_offset_3 = angle_range_regular(relation_offset_3)
+            relation_offset_3 = arc_angle_range_regular(relation_offset_3)
             new_query_center, new_query_offset = self.arc_proj(new_query_center.unsqueeze(1),
                                                                new_query_offset.unsqueeze(1), relation_center_3,
                                                                relation_offset_3 * 0.5)
@@ -1533,7 +1537,7 @@ class HaLk(nn.Module):
             relation_center_1 = angle_range_regular(relation_center_1)
             relation_offset_1 = offsets[0][:, 0, :, :]
             relation_offset_1 = self.angle_scale(relation_offset_1, self.polar_angle_scale)
-            relation_offset_1 = angle_range_regular(relation_offset_1)
+            relation_offset_1 = arc_angle_range_regular(relation_offset_1)
             query_center_1, query_offset_1 = self.arc_proj(query_center_1, query_offset_1 * 0.5, relation_center_1,
                                                            relation_offset_1 * 0.5)
             # projection 2
@@ -1546,7 +1550,7 @@ class HaLk(nn.Module):
             relation_center = angle_range_regular(relation_center)
             relation_offset = offsets[1][:, 0, :, :]
             relation_offset = self.angle_scale(relation_offset, self.polar_angle_scale)
-            relation_offset = angle_range_regular(relation_offset)
+            relation_offset = arc_angle_range_regular(relation_offset)
             query_center_2, query_offset_2 = self.arc_proj(query_center_2, query_offset_2 * 0.5, relation_center,
                                                            relation_offset * 0.5)
             # negation for 2
@@ -1617,7 +1621,7 @@ class HaLk(nn.Module):
             relation_center_1 = angle_range_regular(relation_center_1)
             relation_offset_1 = offsets[0][:, 0, :, :]
             relation_offset_1 = self.angle_scale(relation_offset_1, self.polar_angle_scale)
-            relation_offset_1 = angle_range_regular(relation_offset_1)
+            relation_offset_1 = arc_angle_range_regular(relation_offset_1)
             query_center_1, query_offset_1 = self.arc_proj(query_center_1, query_offset_1 * 0.5, relation_center_1,
                                                            relation_offset_1 * 0.5)
             # projection 2
@@ -1630,7 +1634,7 @@ class HaLk(nn.Module):
             relation_center = angle_range_regular(relation_center)
             relation_offset = offsets[1][:, 0, :, :]
             relation_offset = self.angle_scale(relation_offset, self.polar_angle_scale)
-            relation_offset = angle_range_regular(relation_offset)
+            relation_offset = arc_angle_range_regular(relation_offset)
             query_center_2, query_offset_2 = self.arc_proj(query_center_2, query_offset_2 * 0.5, relation_center,
                                                            relation_offset * 0.5)
             # projection 3
@@ -1643,7 +1647,7 @@ class HaLk(nn.Module):
             relation_center = angle_range_regular(relation_center)
             relation_offset = offsets[2][:, 0, :, :]
             relation_offset = self.angle_scale(relation_offset, self.polar_angle_scale)
-            relation_offset = angle_range_regular(relation_offset)
+            relation_offset = arc_angle_range_regular(relation_offset)
             query_center_3, query_offset_3 = self.arc_proj(query_center_3, query_offset_3 * 0.5, relation_center,
                                                            relation_offset * 0.5)
             # negation
@@ -1707,7 +1711,7 @@ class HaLk(nn.Module):
             relation_center_1 = angle_range_regular(relation_center_1)
             relation_offset_1 = offsets[0][:, 0, :, :]
             relation_offset_1 = self.angle_scale(relation_offset_1, self.polar_angle_scale)
-            relation_offset_1 = angle_range_regular(relation_offset_1)
+            relation_offset_1 = arc_angle_range_regular(relation_offset_1)
             query_center_1, query_offset_1 = self.arc_proj(query_center_1, query_offset_1 * 0.5, relation_center_1, relation_offset_1 * 0.5)
             for i in range(1, 2):
                 # projection
@@ -1716,7 +1720,7 @@ class HaLk(nn.Module):
                 relation_center = angle_range_regular(relation_center)
                 relation_offset = offsets[i][:, 0, :, :]
                 relation_offset = self.angle_scale(relation_offset, self.polar_angle_scale)
-                relation_offset = angle_range_regular(relation_offset)
+                relation_offset = arc_angle_range_regular(relation_offset)
                 query_center_1, query_offset_1 = self.arc_proj(query_center_1, query_offset_1, relation_center, relation_offset * 0.5)
 
             # projection
@@ -1729,7 +1733,7 @@ class HaLk(nn.Module):
             relation_center = angle_range_regular(relation_center)
             relation_offset = offsets[2][:, 0, :, :]
             relation_offset = self.angle_scale(relation_offset, self.polar_angle_scale)
-            relation_offset = angle_range_regular(relation_offset)
+            relation_offset = arc_angle_range_regular(relation_offset)
             query_center_2, query_offset_2 = self.arc_proj(query_center_2, query_offset_2 * 0.5, relation_center, relation_offset * 0.5)
 
             # intersection
@@ -1792,7 +1796,7 @@ class HaLk(nn.Module):
             relation_center_1 = angle_range_regular(relation_center_1)
             relation_offset_1 = offsets[0][:, 0, :, :]
             relation_offset_1 = self.angle_scale(relation_offset_1, self.polar_angle_scale)
-            relation_offset_1 = angle_range_regular(relation_offset_1)
+            relation_offset_1 = arc_angle_range_regular(relation_offset_1)
             query_center_1, query_offset_1 = self.arc_proj(query_center_1, query_offset_1 * 0.5, relation_center_1, relation_offset_1 * 0.5)
 
             # projection
@@ -1805,7 +1809,7 @@ class HaLk(nn.Module):
             relation_center_2 = angle_range_regular(relation_center_2)
             relation_offset_2 = offsets[1][:, 0, :, :]
             relation_offset_2 = self.angle_scale(relation_offset_2, self.polar_angle_scale)
-            relation_offset_2 = angle_range_regular(relation_offset_2)
+            relation_offset_2 = arc_angle_range_regular(relation_offset_2)
             query_center_2, query_offset_2 = self.arc_proj(query_center_2, query_offset_2 * 0.5, relation_center_2, relation_offset_2 * 0.5)
 
             if qtype == 'inter-chain':
@@ -1824,7 +1828,7 @@ class HaLk(nn.Module):
                 relation_center_3 = angle_range_regular(relation_center_3)
                 relation_offset_3 = offsets[2][:, 0, :, :]
                 relation_offset_3 = self.angle_scale(relation_offset_3, self.polar_angle_scale)
-                relation_offset_3 = angle_range_regular(relation_offset_3)
+                relation_offset_3 = arc_angle_range_regular(relation_offset_3)
                 new_query_center, new_query_offset = self.arc_proj(new_query_center.unsqueeze(1), new_query_offset.unsqueeze(1), relation_center_3, relation_offset_3 * 0.5)
 
             elif qtype == 'disjoin-chain':
@@ -1836,7 +1840,7 @@ class HaLk(nn.Module):
                 relation_center_3 = angle_range_regular(relation_center_3)
                 relation_offset_3 = offsets[2][:, 0, :, :]
                 relation_offset_3 = self.angle_scale(relation_offset_3, self.polar_angle_scale)
-                relation_offset_3 = angle_range_regular(relation_offset_3)
+                relation_offset_3 = arc_angle_range_regular(relation_offset_3)
                 new_query_center, new_query_offset = self.arc_proj(disjoin_center, disjoin_offset, relation_center_3, relation_offset_3 * 0.5)
 
             tail = self.angle_scale(tail, self.polar_angle_scale)
@@ -1887,7 +1891,7 @@ class HaLk(nn.Module):
             relation_center_1 = angle_range_regular(relation_center_1)
             relation_offset_1 = offsets[0][:, 0, :, :]
             relation_offset_1 = self.angle_scale(relation_offset_1, self.polar_angle_scale)
-            relation_offset_1 = angle_range_regular(relation_offset_1)
+            relation_offset_1 = arc_angle_range_regular(relation_offset_1)
             query_center_1, query_offset_1 = self.arc_proj(query_center_1, query_offset_1 * 0.5, relation_center_1,
                                                            relation_offset_1 * 0.5)
 
@@ -1901,7 +1905,7 @@ class HaLk(nn.Module):
             relation_center_2 = angle_range_regular(relation_center_2)
             relation_offset_2 = offsets[1][:, 0, :, :]
             relation_offset_2 = self.angle_scale(relation_offset_2, self.polar_angle_scale)
-            relation_offset_2 = angle_range_regular(relation_offset_2)
+            relation_offset_2 = arc_angle_range_regular(relation_offset_2)
             query_center_2, query_offset_2 = self.arc_proj(query_center_2, query_offset_2 * 0.5, relation_center_2,
                                                            relation_offset_2 * 0.5)
 
@@ -1911,7 +1915,7 @@ class HaLk(nn.Module):
             relation_center_3 = angle_range_regular(relation_center_3)
             relation_offset_3 = offsets[2][:, 0, :, :]
             relation_offset_3 = self.angle_scale(relation_offset_3, self.polar_angle_scale)
-            relation_offset_3 = angle_range_regular(relation_offset_3)
+            relation_offset_3 = arc_angle_range_regular(relation_offset_3)
             query_center_1, query_offset_1 = self.arc_proj(query_center_1, query_offset_1, relation_center_3, relation_offset_3 * 0.5)
             query_center_2, query_offset_2 = self.arc_proj(query_center_2, query_offset_2, relation_center_3, relation_offset_3 * 0.5)
 
@@ -1991,7 +1995,7 @@ class HaLk(nn.Module):
             relation_center_1 = angle_range_regular(relation_center_1)
             relation_offset_1 = offset[:, 0, :, :]
             relation_offset_1 = self.angle_scale(relation_offset_1, self.polar_angle_scale)
-            relation_offset_1 = angle_range_regular(relation_offset_1)
+            relation_offset_1 = arc_angle_range_regular(relation_offset_1)
             query_center, query_offset = self.arc_proj(query_center, query_offset * 0.5, relation_center_1, relation_offset_1 * 0.5)
             for rel in range(1, rel_len):
                 #projection
@@ -2000,7 +2004,7 @@ class HaLk(nn.Module):
                 relation_center = angle_range_regular(relation_center)
                 relation_offset = offset[:, rel, :, :]
                 relation_offset = self.angle_scale(relation_offset, self.polar_angle_scale)
-                relation_offset = angle_range_regular(relation_offset)
+                relation_offset = arc_angle_range_regular(relation_offset)
                 query_center, query_offset = self.arc_proj(query_center, query_offset, relation_center, relation_offset * 0.5)
 
             if 'inter' not in qtype and 'union' not in qtype and 'disjoin' not in qtype:

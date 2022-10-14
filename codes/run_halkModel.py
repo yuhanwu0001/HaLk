@@ -106,13 +106,13 @@ def save_model(model, optimizer, save_variable_list, args, before_finetune=False
         os.path.join(args.save_path, 'checkpoint' if not before_finetune else 'checkpoint_before')
     )
 
-    cone_entity_embedding = model.cone_entity_embedding.detach().cpu().numpy()
+    cone_entity_embedding = model.entity_embedding.detach().cpu().numpy()
     np.save(
         os.path.join(args.save_path, 'cone_entity_embedding' if not before_finetune else 'cone_entity_embedding_before'),
         cone_entity_embedding
     )
 
-    axis_embedding = model.axis_embedding.detach().cpu().numpy()
+    axis_embedding = model.relation_center_embedding.detach().cpu().numpy()
     np.save(
         os.path.join(args.save_path, 'axis_embedding' if not before_finetune else 'axis_embedding_before'),
         axis_embedding

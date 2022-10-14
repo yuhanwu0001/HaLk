@@ -9,6 +9,7 @@ import json
 import logging
 import os
 import random
+import datetime
 
 import numpy as np
 import pandas as pd
@@ -19,7 +20,7 @@ import ctypes
 #ctypes.cdll.LoadLibrary('caffe2_nvrtc.dll')
 from torch.utils.data import DataLoader
 
-from arcModel1 import HaLk
+from arcModel1_fix_arclength_init import HaLk
 from dataloader_negation import *
 from tensorboardX import SummaryWriter
 import time
@@ -186,8 +187,10 @@ def main(args):
 
     if (not args.do_train) and (not args.do_valid) and (not args.do_test) and (not args.evaluate_train_data):
         raise ValueError('one of train/val/test mode must be choosed.')
-    
-    args.save_path = 'logs/%s/arc/'%(args.data_path.split('/')[-1])
+
+    current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    data_name = args.data_path.split('/')[-1]
+    args.save_path = 'logs/' + current_time + data_name + '/arc'
     if args.save_path and not os.path.exists(args.save_path):
         os.makedirs(args.save_path)
 
